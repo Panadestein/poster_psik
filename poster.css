@@ -245,7 +245,7 @@ article ul.inline li::before {
   display: none;
 }
 .boxed {
-  border: thin solid #f57900;
+  border: none;
   padding: 0.25rem;
 }
 .center {
