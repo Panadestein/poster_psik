@@ -59,28 +59,6 @@
 	  on large acene chains and amorphous carbon. Speedups of 5 times have been
 	  attained with CD-WAC for the largest systems.
 	</p>
-
-	<header><h3>References and web version</h3></header>
-	<div class="boxed center" border="none">
-	  <div class="center columns">
-	    <img src="images/qr_site.svg"
-		 width="200"
-		 alt="QR code"
-		 style="align-self: start">
-	    <div class="justify-center">
-	      <ol style="text-align: justify">
-		<li id="golze19">
-		  D. Golze, M. Dvorak, and P. Rinke. <em>Front. Chem.</em> 7 (2019): 377.
-		</li>
-		<li id="golze18"> D. Golze, J. Wilhelm, M.J. Van Setten, and P. Rinke.
-		  <em>J. Chem. Theory Comput.</em>, 14(9):4856–4869, 2018.</li>
-		<li id="dubl20"> I. Duchemin and X. Blase. <em>J. Chem. Theory Comput.</em>, 16(3):1742–1756, 2020.</li>
-		<li id="core65"> D. Golze, L. Keller, and P. Rinke. <em>J. Phys. Chem. Lett.</em>
-		  11.5 (2020): 1840-1847.</li>
-	      </ol>
-	    </div>
-	  </div>
-	</div>
       </article>
 
       <article>
@@ -109,18 +87,6 @@
 	    \]
 	  </div>
 	</div>
-	<p>
-	  The asymptotic behavior of the algorithms for computing the \(R(\omega)\) and  \(I(\omega)\)
-          terms is:
-	</p>
-	<p>
-	  \[R \sim N_{res}N_{occ}N_{virt}N^2_{aux} \qquad I \sim N_{\omega}N_{occ}N_{virt}N^2_{aux}\]
-	</p>
-	<p>
-	  We are interested in core level spectroscopy. In this case, the integration grid for imaginary frequencies is
-	  independent of the system size, whereas the number of residues is proportional to number of occupied states.
-	  This implies that the global scaling of CD increases to \(O(N^5)\) for the deepest states.
-	</p>
       </article>
 
       <article>
@@ -155,41 +121,90 @@
       </article>
 
       <article>
+	<header><h3>Scaling analysis</h3></header>
+	<p>
+	  The asymptotic behavior of the algorithms for computing the \(R(\omega)\) and  \(I(\omega)\)
+          terms is:
+	</p>
+	<p>
+	  \[R \sim N_{res}N_{occ}N_{virt}N^2_{aux} \qquad I \sim N_{\omega}N_{occ}N_{virt}N^2_{aux}\]
+	</p>
+	<p>
+	  We are interested in core level spectroscopy. In this case, the integration grid for imaginary frequencies is
+	  independent of the system size, whereas the number of residues is proportional to number of occupied states.
+	  This implies that the global scaling of CD increases to \(O(N^5)\) for the deepest states.
+	</p>
 	<header><h3>CD-WAC implementation details</h3></header>
 	<p>
 	  The new method has been implemented in <a href="https://fhi-aims.org/">FHI-aims</a>. The algorithmic
 	  details shared with CD can be found on Reference <a href="#golze18">[2]</a>. The CD-WAC approach builds
-	  upon a series of heuristic optimizations, presented in the following flowchart:
-	</p>
-	<img src="images/flow_wac.svg" width="70%" alt="CD-WAC workflow"/>
-	<p>
-	  CD-WAC can be used for both core and valence levels. As the results on the next boxes show,
-	  for the latter it suffices to reuse the already computed \(W_{mn}(i\omega)\) matrices. Core
-	  levels are more complicated, and additional complex frequencies near the real axis are needed
+	  upon a series of heuristic optimizations, presented in the flowchart below. CD-WAC can be used for both
+	  core and valence levels. For the latter it suffices to reuse the computed \(W_{mn}(i\omega)\) matrices. Core
+	  levels are more complicated: additional complex frequencies near the real axis are needed
 	  to achieve the desired accuracy. This points can be chosen in a black-box fashion using a real
 	  component that covers the desired frequency range, or a more sophisticated selection of multiple
-	  regions targeting elements of the first period, which also ensures higher quality results.
+	  regions.
 	</p>
-      </article>
-
-      <article>
-	<header><h3>CD-WAC in action</h3></header>
+	<img src="images/flow_wac.svg" width="45%" alt="CD-WAC workflow"/>
       </article>
 
       <article>
 	<header><h3>Performance and validation of CD-WAC</h3></header>
+	<p>Validation of the CD-WAC method with respect to CD using the
+	  GW100 and CORE65 tests suites. The level of theory is PBE/def2-QVPZ and  PBE/def2-TVPZ
+	  respectively. For the valence states of the GW100 set only imaginary frequencies
+	  were used, for the CORE65 50 additional frequencies on two regions were employed.
+	</p>
+	<img src="images/val_cdwac.svg" width="60%" alt="Validation of the CD-WAC method"/>
 
-	<figure>
-	  <img src="images/val_cdwac.svg" alt="Validation of the CD-WAC method"/>
-	  <figcaption>Validation of the CD-WAC method with respect to CD using the
-	    GW100 and CORE65 tests suites.</figcaption>
-	</figure>
+	<p>Scaling plot comparing CD and CD-WAC applied to large acene chains.</p>
+	<img src="images/cd_cdwac_sca.svg" width="60%" alt="CD vs CD-WAC scaling plot"/>
 
-	<figure>
-	  <img src="images/cd_cdwac_sca.svg" alt="CD vs CD-WAC scaling plot"/>
-	  <figcaption>Scaling plot comparing CD and CD-WAC applied to large acene chains.</figcaption>
-	</figure>
+      </article>
 
+      <article>
+	<header><h3>The full monty example: H<sub>2</sub>O molecule</h3></header>
+
+	<div class="boxed center" border="none">
+	  <div class="center columns">
+	    <p style="text-align: justify">
+	      The following example illustrates the predictive power of CD-WAC compared to CD. We have
+	      represented the screened coulomb interaction matrix element \(W_{11}\), the self-energy
+	      matrix element \(\Sigma_{1s}\), and the corresponding spectral function \(A_{1s}\). The
+	      level of theory for these calculation was \(G_0W_0\)@PBE0 def2-TVPZ. It is worth noticing
+	      that the CD-WAC calculation for obtaining this observables was ~ 30 times faster.
+	    </p>
+	    <img src="images/h2o_s.svg" alt="H2O self-energy"/>
+	  </div>
+	</div>
+	<div class="boxed center" border="none">
+	  <div class="center columns">
+	    <img src="images/h2o_a.svg" height="97%" alt="H2O spectral function"/>
+	    <img src="images/h2o_w.svg" alt="H2O W"/>
+	  </div>
+	</div>
+
+	<header><h3>References and web version</h3></header>
+	<div class="boxed center" border="none">
+	  <div class="center columns">
+	    <img src="images/qr_site.svg"
+		 width="200"
+		 alt="QR code"
+		 style="align-self: start">
+	    <div class="justify-center">
+	      <ol style="text-align: justify">
+		<li id="golze19">
+		  D. Golze, M. Dvorak, and P. Rinke. <em>Front. Chem.</em> 7 (2019): 377.
+		</li>
+		<li id="golze18"> D. Golze, J. Wilhelm, M.J. Van Setten, and P. Rinke.
+		  <em>J. Chem. Theory Comput.</em>, 14(9):4856–4869, 2018.</li>
+		<li id="dubl20"> I. Duchemin and X. Blase. <em>J. Chem. Theory Comput.</em>, 16(3):1742–1756, 2020.</li>
+		<li id="core65"> D. Golze, L. Keller, and P. Rinke. <em>J. Phys. Chem. Lett.</em>
+		  11.5 (2020): 1840-1847.</li>
+	      </ol>
+	    </div>
+	  </div>
+	</div>
       </article>
     </main>
 

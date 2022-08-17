@@ -1,3 +1,5 @@
 * Poster Psi-k 22
 
-A poster presentation of the CD-WAC method
+A poster presentation of the CD-WAC method.
+
+Copyright (c) 2022 Dr. Ramón L. Panadés-Barrueta and Dr. Dorothea Golze
