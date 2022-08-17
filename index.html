@@ -46,44 +46,21 @@
       <article property="abstract">
         <header><h3>Abstract</h3></header>
         <p>Many-body methods, like the GW approximation, have recently proven to
-	  be a highly effective tool for computing core-level excitations. In particular,
+	  be a highly effective tool for computing core-level excitations <a href="#golze19">[1]</a>. In particular,
 	  the contour deformation (CD) is an efficient, scalable and numerically stable
-	  approach that has enabled core-level calculations on systems up to 100 atoms <a href="#golze18">[1]</a>.
+	  approach that has enabled core-level calculations on systems up to 100 atoms <a href="#golze18">[2]</a>.
 	  In this work, we reduce the scaling of CD applied to core-levels from \(O(N^5)\)
 	  to \(O(N^4)\), using an analytic continuation of the screened Coulomb interaction
-	  W <a href="#dubl20">[2]</a>. The new method (CD-WAC) has been implemented in
+	  W <a href="#dubl20">[3]</a>. The new method (CD-WAC) has been implemented in
 	  <a href="https://fhi-aims.org/">FHI-aims</a>. CD-WAC has been extensively
-	  tested on well established benchmark sets like the GW100 and the CORE65,
+	  tested on well established benchmark sets like the GW100 and the CORE65 <a href="#core65">[4]</a>,
 	  reporting MAEs of less than 5 meV with respect to CD.
 	  The theoretical scaling has been confirmed by performing scaling experiments
 	  on large acene chains and amorphous carbon. Speedups of 5 times have been
 	  attained with CD-WAC for the largest systems.
 	</p>
-      </article>
 
-      <article>
-	<header><h3>The GW approximation</h3></header>
-
-      </article>
-
-      <article>
-	<header><h3>The contour deformation method</h3></header>
-
-      </article>
-
-      <article>
-	<header><h3>Analytic continuation of W</h3></header>
-
-      </article>
-
-      <article>
-	<header><h3>Performance and validation of CD-WAC</h3></header>
-
-      </article>
-
-      <article>
-	<header><h3>References</h3></header>
-
+	<header><h3>References and web version</h3></header>
 	<div class="boxed center" border="none">
 	  <div class="center columns">
 	    <img src="images/qr_site.svg"
@@ -92,13 +69,126 @@
 		 style="align-self: start">
 	    <div class="justify-center">
 	      <ol style="text-align: justify">
+		<li id="golze19">
+		  D. Golze, M. Dvorak, and P. Rinke. <em>Front. Chem.</em> 7 (2019): 377.
+		</li>
 		<li id="golze18"> D. Golze, J. Wilhelm, M.J. Van Setten, and P. Rinke.
 		  <em>J. Chem. Theory Comput.</em>, 14(9):4856–4869, 2018.</li>
 		<li id="dubl20"> I. Duchemin and X. Blase. <em>J. Chem. Theory Comput.</em>, 16(3):1742–1756, 2020.</li>
+		<li id="core65"> D. Golze, L. Keller, and P. Rinke. <em>J. Phys. Chem. Lett.</em>
+		  11.5 (2020): 1840-1847.</li>
 	      </ol>
 	    </div>
 	  </div>
 	</div>
+      </article>
+
+      <article>
+	<header><h3>The contour deformation method</h3></header>
+	<p>
+	  A clever application of <a href="https://en.wikipedia.org/wiki/Jordan%27s_lemma">Jordan's Lemma</a> and
+	  <a href="https://en.wikipedia.org/wiki/Residue_theorem">Cauchy's residue theorem</a>.
+	  Integral self-energy expression is a consequence of
+	  the <a href="https://en.wikipedia.org/wiki/Convolution_theorem">Convolution theorem</a>.
+	</p>
+	<div class="boxed center" border="none">
+	  <div class="center columns" style="grid-template-columns: 20fr 30fr">
+	    <img src="images/cd_mine.svg" style="align-self: start">
+	    \[
+	    \displaystyle
+	    \small
+	    \begin{align*}
+	    \Sigma(\mathbf{r},&\mathbf{r}',\omega) = \frac{i}{2\pi}\oint d\omega' G_0(\omega+\omega')W_0(\omega')\\
+	    & =\int_{\Re}+\int_{\Im}+\int_{D_{\Gamma^+}}+\int_{D_{\Gamma^-}}\\[2pt]
+	    & = \frac{i}{2\pi}\oint d\omega'
+	    G_{0}(\mathbf{r},\mathbf{r}',\omega+\omega')W_{0}(\mathbf{r},\mathbf{r}',\omega')\\[1pt]
+	    & -\frac{1}{2\pi}\int_{-\infty}^{+\infty}d\omega'G_{0}(\mathbf{r},\mathbf{r}',\omega+i\omega')
+	    W_{0}(\mathbf{r},\mathbf{r}',i\omega')\\[4pt]
+	    & = R(\omega) - I(\omega)
+	    \end{align*}
+	    \]
+	  </div>
+	</div>
+	<p>
+	  The asymptotic behavior of the algorithms for computing the \(R(\omega)\) and  \(I(\omega)\)
+          terms is:
+	</p>
+	<p>
+	  \[R \sim N_{res}N_{occ}N_{virt}N^2_{aux} \qquad I \sim N_{\omega}N_{occ}N_{virt}N^2_{aux}\]
+	</p>
+	<p>
+	  We are interested in core level spectroscopy. In this case, the integration grid for imaginary frequencies is
+	  independent of the system size, whereas the number of residues is proportional to number of occupied states.
+	  This implies that the global scaling of CD increases to \(O(N^5)\) for the deepest states.
+	</p>
+      </article>
+
+      <article>
+	<header><h3>Constructing W using RI-V: the CD way</h3></header>
+	<p>
+	  Many quantities involving 4-center integrals can be efficiently computed in FHI-aims
+	  using the resolution of the identity with coulomb metric (RI-V). The \(W_{mn}(\omega)\)
+	  matrices of CD are no exception:
+	</p>
+	\[
+        W_{mn}(\omega) = \sum_{PQ}O_{P}^{nm}[\mathbf{1} -
+	\mathbf{\Pi}(|\epsilon_m - \omega| + i\eta)]^{-1}_{PQ}O_{Q}^{mn}
+	\]
+	where the polarizability matrices are given by:
+	\[
+	\Pi_{PQ}(i\omega) = 2 \sum_{ia}O_P^{ia}
+	\frac{\epsilon_i-\epsilon_a}{\omega^2 + (\epsilon_i-\epsilon_a)^2}O_Q^{ia}
+	\]
+	<header><h3>Analytic continuation of W: the rationale for CD-WAC</h3></header>
+	<p>
+	  Analytic continuation techniques using Padé approximants have been used in GW for
+	  computing the self-energy \(\Re\Sigma_n(\omega)\), but until very recently <a href="#dubl20">[3]</a> this idea
+	  was not fully exploited for the screened Coulomb interaction matrices. In the context of CD, it allows the
+	  reduction of the scaling as the \(W_{mn}(\omega)\) matrices needed for the integral \(R(\omega)\) can
+	  be computed by direct evaluation of a Thiele interpolant constructed as follows:
+	</p>
+	\[
+	W_{nm}(z) = \cfrac{a_1}{1+\cfrac{a_{2}(z^2-\omega^2_{1})}
+	{1+\cfrac{a_{3}(z^2-\omega^2_{2})}{1+\cdots+
+	\cfrac{a_p(z^2-\omega^2_{p-1})}{1 + (z^2-\omega^2_p)g_{p+1}(z)}}}}
+	\]
+      </article>
+
+      <article>
+	<header><h3>CD-WAC implementation details</h3></header>
+	<p>
+	  The new method has been implemented in <a href="https://fhi-aims.org/">FHI-aims</a>. The algorithmic
+	  details shared with CD can be found on Reference <a href="#golze18">[2]</a>. The CD-WAC approach builds
+	  upon a series of heuristic optimizations, presented in the following flowchart:
+	</p>
+	<img src="images/flow_wac.svg" width="70%" alt="CD-WAC workflow"/>
+	<p>
+	  CD-WAC can be used for both core and valence levels. As the results on the next boxes show,
+	  for the latter it suffices to reuse the already computed \(W_{mn}(i\omega)\) matrices. Core
+	  levels are more complicated, and additional complex frequencies near the real axis are needed
+	  to achieve the desired accuracy. This points can be chosen in a black-box fashion using a real
+	  component that covers the desired frequency range, or a more sophisticated selection of multiple
+	  regions targeting elements of the first period, which also ensures higher quality results.
+	</p>
+      </article>
+
+      <article>
+	<header><h3>CD-WAC in action</h3></header>
+      </article>
+
+      <article>
+	<header><h3>Performance and validation of CD-WAC</h3></header>
+
+	<figure>
+	  <img src="images/val_cdwac.svg" alt="Validation of the CD-WAC method"/>
+	  <figcaption>Validation of the CD-WAC method with respect to CD using the
+	    GW100 and CORE65 tests suites.</figcaption>
+	</figure>
+
+	<figure>
+	  <img src="images/cd_cdwac_sca.svg" alt="CD vs CD-WAC scaling plot"/>
+	  <figcaption>Scaling plot comparing CD and CD-WAC applied to large acene chains.</figcaption>
+	</figure>
 
       </article>
     </main>
