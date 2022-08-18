@@ -45,13 +45,16 @@
       <!-- Poster article sections -->
       <article property="abstract">
         <header><h3>Abstract</h3></header>
-        <p>Many-body methods, like the GW approximation, have recently proven to
+        <p>Many-body methods related to the GW approximation have proven to
 	  be a highly effective tool for computing core-level excitations <a href="#golze19">[1]</a>. In particular,
 	  the contour deformation (CD) is an efficient, scalable and numerically stable
 	  approach that has enabled core-level calculations on systems up to 100 atoms <a href="#golze18">[2]</a>.
 	  In this work, we reduce the scaling of CD applied to core-levels from \(O(N^5)\)
-	  to \(O(N^4)\), using an analytic continuation of the screened Coulomb interaction
-	  W <a href="#dubl20">[3]</a>. The new method (CD-WAC) has been implemented in
+	  to \(O(N^4)\), using an analytic continuation of the screened Coulomb interaction (W).
+	  Analytic continuation techniques using Padé approximants have been used in GW for
+	  computing the self-energy \(\Re\Sigma_n(\omega)\), but until very recently <a href="#dubl20">[3]</a> this idea
+	  was not fully exploited for the W matrices.
+	  The new method (CD-WAC) has been implemented in
 	  <a href="https://fhi-aims.org/">FHI-aims</a>. CD-WAC has been extensively
 	  tested on well established benchmark sets like the GW100 and the CORE65 <a href="#core65">[4]</a>,
 	  reporting MAEs of less than 5 meV with respect to CD.
@@ -70,19 +73,20 @@
 	  the <a href="https://en.wikipedia.org/wiki/Convolution_theorem">Convolution theorem</a>.
 	</p>
 	<div class="boxed center" border="none">
-	  <div class="center columns" style="grid-template-columns: 20fr 30fr">
+	  <div class="center columns" style="grid-template-columns: 18fr 30fr">
 	    <img src="images/cd.svg" style="align-self: start">
 	    \[
 	    \displaystyle
 	    \small
 	    \begin{align*}
-	    \Sigma(\mathbf{r},&\mathbf{r}',\omega) = \frac{i}{2\pi}\oint d\omega' G_0(\omega+\omega')W_0(\omega')\\
-	    & =\int_{\Re}+\int_{\Im}+\int_{D_{\Gamma^+}}+\int_{D_{\Gamma^-}}\\[2pt]
-	    & = \frac{i}{2\pi}\oint d\omega'
-	    G_{0}(\mathbf{r},\mathbf{r}',\omega+\omega')W_{0}(\mathbf{r},\mathbf{r}',\omega')\\[1pt]
+	    \Sigma_c&(\mathbf{r},\mathbf{r}',\omega) = \oint-\int_{\Im}-\int_{D_{\Gamma^+}}-\int_{D_{\Gamma^-}} =\\
 	    & -\frac{1}{2\pi}\int_{-\infty}^{+\infty}d\omega'G_{0}(\mathbf{r},\mathbf{r}',\omega+i\omega')
 	    W_{0}(\mathbf{r},\mathbf{r}',i\omega')\\[4pt]
-	    & = R(\omega) - I(\omega)
+	    & - \sum_i \phi_i(\mathbf{r})\phi_i(\mathbf{r'})
+	    W_{0}(\mathbf{r},\mathbf{r}',|\epsilon_i-\omega|+i\eta)\theta(\epsilon_i-\omega)\\
+	    & + \sum_a \phi_a(\mathbf{r})\phi_a(\mathbf{r'})
+	    W_{0}(\mathbf{r},\mathbf{r}',|\epsilon_a-\omega|+i\eta)\theta(\omega-\epsilon_a)\\
+	    & = R(\omega) - I(i\omega)
 	    \end{align*}
 	    \]
 	  </div>
@@ -105,25 +109,33 @@
 	\Pi_{PQ}(i\omega) = 2 \sum_{ia}O_P^{ia}
 	\frac{\epsilon_i-\epsilon_a}{\omega^2 + (\epsilon_i-\epsilon_a)^2}O_Q^{ia}
 	\]
+
 	<header><h3>Analytic continuation of W: the rationale for CD-WAC</h3></header>
 	<p>
-	  Analytic continuation techniques using Padé approximants have been used in GW for
-	  computing the self-energy \(\Re\Sigma_n(\omega)\), but until very recently <a href="#dubl20">[3]</a> this idea
-	  was not fully exploited for the screened Coulomb interaction matrices. In the context of CD, it allows the
-	  reduction of the scaling as the \(W_{mn}(\omega)\) matrices needed for the integral \(R(\omega)\) can
-	  be computed by direct evaluation of a Thiele interpolant constructed as follows:
+	  CD-WAC reduces the formal scaling of CD by computing the W matrices
+	  that appear in the \(R(\omega)\) term using an analytic continuation \(P_i(\omega_j)=W_{mn}(\omega_j)\). The
+	  latter is computed using a modified version of the Thiele's reciprocal
+	  differences algorithm developed in our group:
 	</p>
-	\[
-	W_{nm}(z) = \cfrac{a_1}{1+\cfrac{a_{2}(z^2-\omega^2_{1})}
-	{1+\cfrac{a_{3}(z^2-\omega^2_{2})}{1+\cdots+
-	\cfrac{a_p(z^2-\omega^2_{p-1})}{1 + (z^2-\omega^2_p)g_{p+1}(z)}}}}
-	\]
+	<div class="boxed center" border="none">
+	  <div class="center columns" style="grid-template-columns: 50fr 50fr">
+	    <img src="images/algo_thiele.svg" alt="Modified Thiele algorithm" width="120%"  style="align-self: start"/> 
+	    <p>
+	      \[
+	      \small
+	      P_{N}(z) = \cfrac{a_1}{1+\cfrac{a_{2}(z^2-\omega^2_{1})}
+	      {1+\cfrac{a_{3}(z^2-\omega^2_{2})}{1+\cdots+
+	      \cfrac{a_p(z^2-\omega^2_{p-1})}{1 + (z^2-\omega^2_p)g_{p+1}(z)}}}}
+	      \]
+	    </p>
+	  </div>
+	</div>
       </article>
 
       <article>
 	<header><h3>Scaling analysis</h3></header>
 	<p>
-	  The asymptotic behavior of the algorithms for computing the \(R(\omega)\) and  \(I(\omega)\)
+	  The asymptotic behavior of the algorithms for computing the \(R(\omega)\) and  \(I(i\omega)\)
           terms is:
 	</p>
 	<p>
@@ -136,59 +148,55 @@
 	</p>
 	<header><h3>CD-WAC implementation details</h3></header>
 	<p>
-	  The new method has been implemented in <a href="https://fhi-aims.org/">FHI-aims</a>. The algorithmic
-	  details shared with CD can be found on Reference <a href="#golze18">[2]</a>. The CD-WAC approach builds
-	  upon a series of heuristic optimizations, presented in the flowchart below. CD-WAC can be used for both
-	  core and valence levels. For the latter it suffices to reuse the computed \(W_{mn}(i\omega)\) matrices. Core
-	  levels are more complicated: additional complex frequencies near the real axis are needed
-	  to achieve the desired accuracy. This points can be chosen in a black-box fashion using a real
-	  component that covers the desired frequency range, or a more sophisticated selection of multiple
-	  regions.
+	  The CD-WAC algorithm builds upon the CD one, whose details can be found on Reference
+	  <a href="#golze18">[2]</a>. CD-WAC relays on a series of heuristic optimizations,
+	  presented in the flowchart below (left panel). Depending on the type of atom and orbital considered,
+	  three different sampling strategies for the analytic continuation are possible (right panel).
 	</p>
-	<img src="images/flow_wac_mod.svg" width="45%" alt="CD-WAC workflow"/>
-      </article>
-
-      <article>
-	<header><h3>Performance and validation of CD-WAC</h3></header>
-	<p>Validation of the CD-WAC method with respect to CD using the
-	  GW100 and CORE65 tests suites. The level of theory is \(G_0W_0\)@PBE/def2-QVPZ and
-	  \(G_0W_0\)@PBE/def2-TVPZ respectively. For the valence states of the GW100 set only imaginary frequencies
-	  were used, for the CORE65 50 additional frequencies on two regions were employed.
-	</p>
-	<img src="images/val_cdwac.svg" width="60%" alt="Validation of the CD-WAC method"/>
-
-	<p>
-	  Scaling plot comparing CD and CD-WAC applied to large acene chains C<sub>4n+2</sub>H<sub>2n+4</sub>
-	  with n ranging from 1 to 15. We were interested on the C1s core level of the molecules, the level of
-	  theory of the calculations is \(G_0W_0\)@PBE0(\(\alpha=0.5\))/def2-QVPZ. The expected scale reduction
-	  is thus verified by the numerical experiment.
-	</p>
-	<img src="images/cd_cdwac_sca.svg" width="60%" alt="CD vs CD-WAC scaling plot"/>
-
+	<div class="boxed center" border="none">
+	  <div class="center columns">
+	    <img src="images/flow_wac_mod.svg" alt="CD-WAC workflow"/>
+	    <img src="images/regions.svg" alt="CD-WAC workflow"/>
+	  </div>
+	</div>
       </article>
 
       <article>
 	<header><h3>The full monty example: H<sub>2</sub>O molecule</h3></header>
-
-	<div class="boxed center" border="none">
+	<p style="text-align: justify">
+	  The following example illustrates the predictive power of CD-WAC. We have
+	  represented the screened coulomb interaction matrix element \(W_{1s,1s}\) and the self-energy
+	  matrix element \(\Sigma_{1s}\). The level of theory of these calculation is \(G_0W_0\)@PBE
+	  using NAOs of the second tier. The CD-WAC calculation is ~ 30 times faster than CD, at the expense
+	  of only 50 extra frequency points for the interpolation.
+	</p>
+	<div class="boxed center" border="none" style="grid-template-columns: 50fr 50fr">
 	  <div class="center columns">
-	    <p style="text-align: justify">
-	      The following example illustrates the predictive power of CD-WAC compared to CD. We have
-	      represented the screened coulomb interaction matrix element \(W_{11}\), the self-energy
-	      matrix element \(\Sigma_{1s}\), and the corresponding spectral function \(A_{1s}\). The
-	      level of theory for these calculation was \(G_0W_0\)@PBE0 def2-TVPZ. It is worth noticing
-	      that the CD-WAC calculation for obtaining this observables was ~ 30 times faster.
-	    </p>
+	    <img src="images/h2o_w.svg" alt="H2O W"/>
 	    <img src="images/h2o_s.svg" alt="H2O self-energy"/>
 	  </div>
 	</div>
 
-	<div class="boxed center" border="none" style="grid-template-columns: 40fr 40fr">
-	  <div class="center columns">
-	    <img src="images/h2o_a.svg" height="77%" alt="H2O spectral function"/>
-	    <img src="images/h2o_w.svg" height="80%" alt="H2O W"/>
-	  </div>
-	</div>
+	<header><h3>Validation of CD-WAC</h3></header>
+	<p>Validation of the CD-WAC method with respect to CD using the
+	  GW100 and CORE65 tests suites. The level of theory is \(G_0W_0\)@PBE/def2-QVPZ and
+	  \(G_0W_0\)@PBEh(\(\alpha=0.45\))/cc-pVTZ respectively. For the valence states of the GW100 set only imaginary frequencies
+	  were used, for the CORE65 50 additional frequencies on two regions were employed.
+	</p>
+	<img src="images/val_cdwac.svg" width="70%" alt="Validation of the CD-WAC method"/>
+
+      </article>
+
+      <article>
+	<header><h3>Performance of CD-WAC</h3></header>
+	<p>
+	  Scaling plot comparing CD and CD-WAC applied to large acene chains C<sub>4n+2</sub>H<sub>2n+4</sub>
+	  with n ranging from 1 to 15. We were interested on the C1s core level of the molecules, the level of
+	  theory of the calculations is \(G_0W_0\)@PBEh(\(\alpha=0.5\))/def2-QVPZ. The expected scale reduction
+	  is thus verified by the numerical experiment.
+	</p>
+	<img src="images/cd_cdwac_sca.svg" width="80%" alt="CD vs CD-WAC scaling plot"/>
+
 
 	<header><h3>References and web version</h3></header>
 	<div class="boxed center" border="none">
